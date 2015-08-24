@@ -4,7 +4,7 @@ package golfGame;
 public class golfBall {
 	//add mechanisms for thread saftey
 	private static int noBalls;
-	private int myID;
+	private final int myID;
 	
 	golfBall() {
 		myID=noBalls;
