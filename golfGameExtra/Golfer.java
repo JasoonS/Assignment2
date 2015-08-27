@@ -1,4 +1,4 @@
-package golfGame;
+package golfGameExtra;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -6,13 +6,16 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Golfer extends Thread {
+
+	//Remember to ensure thread safety
+	
+	private AtomicBoolean done;
 	
 	private static int noGolfers; //shared amongst threads
 	private static int ballsPerBucket; //shared amongst threads
 	
-	private final int myID; //unique identifier for the object
+	private int myID;
 	
-	private AtomicBoolean done;
 	private Queue<golfBall> golferBucket;
 	private BallStash sharedStash; //link to shared stash
 	private Range sharedField; //link to shared field
@@ -27,43 +30,30 @@ public class Golfer extends Thread {
 		myID=newGolfID();
 	}
 
-	//Never accessed concurrently
 	private static int newGolfID() { 
 		noGolfers++;
 		return noGolfers;
 	}
 	
-	//helper method for clean code
 	private boolean fullBucket() throws InterruptedException{
 		return sharedStash.getBucketBalls(golferBucket, myID);
 	}
 	
-	//Don't need to worry about
 	public static void setBallsPerBucket (int noBalls) {
 		ballsPerBucket=noBalls;
 	}
-	
-	
 	private static int getBallsPerBucket () {
 		return ballsPerBucket;
 	}
-	
-	
 	public void run() {
 		
 		while (done.get() != true) {
 			
-			//Need to lock on done to prevent read-act compound action (ie make it impossible to print this like once golf range closes).
-			synchronized(done){
-				if(done.get()) return;
-				
-				System.out.println(">>> Golfer #"+ myID + " trying to fill bucket with "+getBallsPerBucket()+" balls.");
-			}
-			
+			 
+			System.out.println(">>> Golfer #"+ myID + " trying to fill bucket with "+getBallsPerBucket()+" balls.");
 			try {
 				//Return if the bucket wasn't filled due to closing time.
 				if(!fullBucket()) return;
-				
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}	
@@ -73,8 +63,8 @@ public class Golfer extends Thread {
 				
 			    try {
 					sleep(swingTime.nextInt(2000));
-					hittBallOnRange();
-//					System.out.windowprintln("Golfer #"+ myID + " hit ball #"+hittBallId+" onto field");	
+					int hittBallId = hittBallOnRange();
+//					System.out.println("Golfer #"+ myID + " hit ball #"+hittBallId+" onto field");	
 					
 					
 				} catch (InterruptedException e) {
@@ -89,8 +79,11 @@ public class Golfer extends Thread {
 		return;
 	}
 
-	
-	private void hittBallOnRange() throws InterruptedException {
-		sharedField.hitBallOntoField(golferBucket.remove(), myID);
+	private synchronized int hittBallOnRange() throws InterruptedException {
+//		System.out.println("Golfer #"+ myID + "Bucket had - " + golferBucket.size() + "balls"); 
+		int num = sharedField.hitBallOntoField(golferBucket.remove());
+//		System.out.println("Golfer #"+ myID + "Now the bucket has - " + golferBucket.size() + "balls");
+//		System.out.println("Golfer #"+ myID + " hit ball #"+num+" onto field");
+		return num;
 	}	
 }

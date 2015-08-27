@@ -1,4 +1,4 @@
-package golfGame;
+package golfGameExtra;
 
 import java.util.LinkedList;
 import java.util.Queue;

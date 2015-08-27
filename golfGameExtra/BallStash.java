@@ -1,4 +1,4 @@
-package golfGame;
+package golfGameExtra;
 
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -42,9 +42,8 @@ public class BallStash {
 		//this object's state is only dependent on the stash variable 
 		//  (the other variables are not related to the object's state and are either shared or constant)
 		synchronized(stash){
-			
 			while(getBallsInStash() < getSizeBucket()) {
-				if(done.get()) return false; //ok since done is atomic.
+				if(done.get()) return false;
 				//waits if the stash is not large enough to safely full a bucket
 				stash.wait();
 			}
@@ -52,22 +51,15 @@ public class BallStash {
 			//loop through filling bucket to capacity
 			for(int i = 0; i < sizeBucket; i++) {
 				golferBucket.add(stash.take());
+				if(done.get()) return false;
 			}
-		}//- release the lock on stash here, before printing or checking done field again.
 			
-		//This print needs to be here to prevent interleaving at closing time
-		//  - synchronized on done to prevent interleaving
-		synchronized(done) {
-			if(done.get()) {
-				System.out.println("<<< Golfer #"+ myID + " filled bucket with          "+sizeBucket+" balls");
-				
-				return false;
-			}
+			//This print needs to be here to prevent interleaving at closing time
+			System.out.println("<<< Golfer #"+ myID + " filled bucket with          "+sizeBucket+" balls");
+			
+			//return as clearly the
+			return true;
 		}
-		
-		//return as clearly the
-		return true;
-
 	}
 	
 	//No protection mechanism as BlockingQueue's are themselves atomic

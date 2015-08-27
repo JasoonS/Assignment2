@@ -7,52 +7,45 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Range {
 	private final int sizeStash;
-	private BlockingQueue<golfBall> stash;
 	private AtomicBoolean bollieCollecting;
+	private AtomicBoolean done;
+
+	private BlockingQueue<golfBall> stash;
 	
-	Range(int sizeStash, AtomicBoolean bollieCollecting) {
+	Range(int sizeStash, AtomicBoolean bollieCollecting, AtomicBoolean done) {
 		this.sizeStash = sizeStash;
 		this.bollieCollecting = bollieCollecting;
+		this.done = done;
 		stash = new ArrayBlockingQueue<golfBall>(sizeStash);
 	}
 	
-	public synchronized int hitBallOntoField(golfBall golfBall) throws InterruptedException {
-		
-		while(bollieCollecting.equals(true)) {//if there is no cart on the field
-			wait();
+	public void hitBallOntoField(golfBall golfBall, int myID) throws InterruptedException {
+		synchronized(stash){
+			while(bollieCollecting.equals(true)) {//if there is no cart on the field
+				this.wait();
+			}
+	
+			stash.add(golfBall);
+			
+			System.out.println("Golfer #"+ myID + " hit ball #"+ golfBall.getID() +" onto field");
 		}
-
-		stash.add(golfBall);
-		
-		return golfBall.getID();
-		
 	}
 
-	public synchronized int collectAllBallsFromField(Queue<golfBall> ballsCollected) throws InterruptedException {
-		int ballsRetrieved = getBallsOnRange();
-		while(!stash.isEmpty()){
+	public int collectAllBallsFromField(Queue<golfBall> ballsCollected) throws InterruptedException {
+		synchronized(stash) {
+			int ballsRetrieved = getBallsOnRange();
+			while((done.get() != true) && !stash.isEmpty()){	
+				golfBall ball = stash.take();
+				
+				ballsCollected.add(ball);	
+			}
 			
-			golfBall ball = stash.take();
-			System.out.println("BOLLIE COLLECTING:::This ball has an ID of: " + ball.getID());
-//			System.out.println("Stash now has: " + stash.size() + " with a 'isEmpty' value of " + stash.isEmpty());
-			
-			
-			ballsCollected.add(ball);
+			return ballsRetrieved;
 		}
-		
-		return ballsRetrieved;
 	}
 	
 	private synchronized int getBallsOnRange() {
 		return stash.size();
 	}
-	
-	
 
-	//ADD variable: ballsOnField collection;
-	//Add constructors
-	
-	//ADD method: collectAllBallsFromField(golfBall [] ballsCollected) 
-
-	//ADD method: hitBallOntoField(golfBall ball) 
 }
