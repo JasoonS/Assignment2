@@ -6,46 +6,26 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Range {
-	private final int sizeStash;
-	private AtomicBoolean bollieCollecting;
 	private AtomicBoolean done;
-
 	private BlockingQueue<golfBall> stash;
 	
-	Range(int sizeStash, AtomicBoolean bollieCollecting, AtomicBoolean done) {
-		this.sizeStash = sizeStash;
-		this.bollieCollecting = bollieCollecting;
+	Range(int sizeStash, AtomicBoolean done) {
 		this.done = done;
 		stash = new ArrayBlockingQueue<golfBall>(sizeStash);
 	}
 	
-	public void hitBallOntoField(golfBall golfBall, int myID) throws InterruptedException {
-		synchronized(stash){
-			while(bollieCollecting.equals(true)) {//if there is no cart on the field
-				this.wait();
-			}
-	
-			stash.add(golfBall);
-			
-			System.out.println("Golfer #"+ myID + " hit ball #"+ golfBall.getID() +" onto field");
-		}
+	//add a golf ball to the range's queue
+	public synchronized void hitBallOntoField(golfBall golfBall, int myID) throws InterruptedException {
+		stash.add(golfBall);
+		System.out.println("Golfer #"+ myID + " hit ball #"+ golfBall.getID() +" onto field");
 	}
 
-	public int collectAllBallsFromField(Queue<golfBall> ballsCollected) throws InterruptedException {
-		synchronized(stash) {
-			int ballsRetrieved = getBallsOnRange();
-			while((done.get() != true) && !stash.isEmpty()){	
-				golfBall ball = stash.take();
-				
-				ballsCollected.add(ball);	
-			}
-			
-			return ballsRetrieved;
+	//method for Bollie to collect all balls from the stash
+	public synchronized void collectAllBallsFromField(Queue<golfBall> ballsCollected) throws InterruptedException {
+		//add balls from stash one by one by to Bollies private stash.
+		while((done.get() != true) && !stash.isEmpty()){	
+			golfBall ball = stash.take();
+			ballsCollected.add(ball);	
 		}
 	}
-	
-	private synchronized int getBallsOnRange() {
-		return stash.size();
-	}
-
 }

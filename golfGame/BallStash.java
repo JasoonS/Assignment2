@@ -8,16 +8,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BallStash {
 	private final int sizeStash;
 	private final int sizeBucket;
-	private AtomicBoolean bollieCollecting;
 	private AtomicBoolean done;
 	
 	//This stash variable determines state of this object
 	private BlockingQueue<golfBall> stash; 
 	
-	BallStash(int sizeStash, int sizeBucket, AtomicBoolean bollieCollecting, AtomicBoolean done){
+	BallStash(int sizeStash, int sizeBucket, AtomicBoolean done){
 		this.sizeStash = sizeStash;
 		this.sizeBucket = sizeBucket;
-		this.bollieCollecting = bollieCollecting;
 		this.done = done;
 		stash = new ArrayBlockingQueue<golfBall>(sizeStash);
 		
@@ -60,12 +58,10 @@ public class BallStash {
 		synchronized(done) {
 			if(done.get()) {
 				System.out.println("<<< Golfer #"+ myID + " filled bucket with          "+sizeBucket+" balls");
-				
 				return false;
 			}
 		}
-		
-		//return as clearly the
+		//return true as clearly the transaction of balls was successful.
 		return true;
 
 	}
@@ -77,15 +73,16 @@ public class BallStash {
 	}
 
 	
-	public void addBallsToStash(Queue<golfBall> ballsCollected, int noCollected) throws InterruptedException {
+	public void addBallsToStash(Queue<golfBall> ballsCollected) throws InterruptedException {
 		synchronized(stash){
-			bollieCollecting.set(false);
-					
-			for(int i = 0; i < noCollected; i++) {
+			
+			//transfer all the balls into the stash
+			while(ballsCollected.size() > 0) {
 				golfBall ball = ballsCollected.remove();
 				stash.put(ball);
 			}
-			
+
+			//notify all threads waiting to get bucket of balls
 			stash.notifyAll();
 		}
 	}

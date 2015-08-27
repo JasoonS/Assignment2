@@ -11,7 +11,6 @@ public class Golfer extends Thread {
 	private static int ballsPerBucket; //shared amongst threads
 	
 	private final int myID; //unique identifier for the object
-	
 	private AtomicBoolean done;
 	private Queue<golfBall> golferBucket;
 	private BallStash sharedStash; //link to shared stash
@@ -38,12 +37,12 @@ public class Golfer extends Thread {
 		return sharedStash.getBucketBalls(golferBucket, myID);
 	}
 	
-	//Don't need to worry about
+	//Only set once, don't need to worry about concurrency.
 	public static void setBallsPerBucket (int noBalls) {
 		ballsPerBucket=noBalls;
 	}
 	
-	
+	//Never modified, no need to synchronize.
 	private static int getBallsPerBucket () {
 		return ballsPerBucket;
 	}
@@ -61,7 +60,7 @@ public class Golfer extends Thread {
 			}
 			
 			try {
-				//Return if the bucket wasn't filled due to closing time.
+				//Return if the bucket was not filled due to closing time.
 				if(!fullBucket()) return;
 				
 			} catch (InterruptedException e1) {
@@ -73,23 +72,17 @@ public class Golfer extends Thread {
 				
 			    try {
 					sleep(swingTime.nextInt(2000));
-					hittBallOnRange();
-//					System.out.windowprintln("Golfer #"+ myID + " hit ball #"+hittBallId+" onto field");	
 					
+					hittBallOnRange(); //      swing
 					
 				} catch (InterruptedException e) {
 					e.printStackTrace();
-				} //      swing
-			    
-				    
-			    //!!wair for cart if necessary if cart there
+				}
 			}
-			
 		}
-		return;
+		return; //means the done flag has been set to true
 	}
 
-	
 	private void hittBallOnRange() throws InterruptedException {
 		sharedField.hitBallOntoField(golferBucket.remove(), myID);
 	}	
