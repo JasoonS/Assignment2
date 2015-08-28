@@ -157,6 +157,10 @@ public class KeyboardListener extends JFrame implements KeyListener{
 	}
 	
 	private void stopGolfSimulation(){
+		if(done.get()){
+			System.out.println("We are closed, sorry! Please restart the simulation.");
+			return;
+		} 
 		synchronized(done){
 			done.set(true);
 			System.out.println("=======  River Club Driving Range Closing ========");
@@ -165,6 +169,10 @@ public class KeyboardListener extends JFrame implements KeyListener{
 	}
 	
 	private void removeGolfer(){
+		if(done.get()){
+			System.out.println("We are closed, sorry! Please restart the simulation.");
+			return;
+		} 
 		golfers.removeGolfer();
 		if (noGolfers.get() < 1) return;
 		golfersDisplay.setText("There are " + noGolfers.decrementAndGet() + " currently");
@@ -204,6 +212,10 @@ public class KeyboardListener extends JFrame implements KeyListener{
 	}
 	
 	private void toggleBollie() throws InterruptedException{
+		if(done.get()){
+			System.out.println("We are closed, sorry! Please restart the simulation.");
+			return;
+		} 
 		bollie.toggleAutoClean();
 		String keyword = "";
 		if(bollie.getBollieStatus()) keyword = "NOT ";
@@ -211,6 +223,10 @@ public class KeyboardListener extends JFrame implements KeyListener{
 	}
 	
 	private void forceBollieToCollect() throws InterruptedException{
+		if(done.get()){
+			System.out.println("We are closed, sorry! Please restart the simulation.");
+			return;
+		} 
 		bollie.forceBollieOpperation();
 	}
 }
