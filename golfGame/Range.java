@@ -1,3 +1,9 @@
+/* Range in the Driving Range. Role is to store incoming balls.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
+
 package golfGame;
 
 import java.util.Queue;

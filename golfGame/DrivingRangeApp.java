@@ -1,3 +1,8 @@
+/*The main class and driver for the Driving Range.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
 package golfGame;
 
 import java.util.Random;
@@ -10,12 +15,9 @@ public class DrivingRangeApp {
 		AtomicBoolean done  =new AtomicBoolean(false);
 		Random openTime = new Random();
 		
-//		int noGolfers = Integer.parseInt(args[0]);
-//		int sizeStash= Integer.parseInt(args[1]);
-//		int sizeBucket= Integer.parseInt(args[2]);
-		int noGolfers = 20;
-		int sizeStash= 200;
-		int sizeBucket= 5;
+		int noGolfers = Integer.parseInt(args[0]);
+		int sizeStash= Integer.parseInt(args[1]);
+		int sizeBucket= Integer.parseInt(args[2]);
 		BallStash sharedStash = new BallStash(sizeStash, sizeBucket, done);
 		Range sharedField = new Range(sizeStash, done);
 		Golfer.setBallsPerBucket(sizeBucket);
@@ -32,7 +34,7 @@ public class DrivingRangeApp {
 		bollie.start();
 		
 		//Opens for at least 1000ms, plus a random number
-		Thread.sleep(1000 + openTime.nextInt(30000));
+		Thread.sleep(5000 + openTime.nextInt(5000));
 		synchronized(done){
 			done.set(true);
 			System.out.println("=======  River Club Driving Range Closing ========");

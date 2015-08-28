@@ -1,0 +1,13 @@
+#!/bin/bash
+clear
+echo "---------Compiling Code---------"
+javac golfGame/DrivingRangeApp.java 
+echo "---------Ready to Run Code---------"
+read -p "Enter the desired number of Golfers:" golfers
+read -p "Enter the desired number of balls/stash size:" stash
+read -p "Enter the desired size of buckets:" bucketSize
+echo "---------Computing---------"
+echo "Running the Serial Program"
+java golfGame.DrivingRangeApp $golfers $stash $bucketSize
+echo "---------Finished Script---------"
+

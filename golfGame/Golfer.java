@@ -1,3 +1,9 @@
+/* Golfer entity in the Driving Range.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
+
 package golfGame;
 
 import java.util.LinkedList;

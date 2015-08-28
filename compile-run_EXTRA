@@ -1,0 +1,15 @@
+#!/bin/bash
+clear
+echo "---------Compiling Code---------"
+javac golfGameExtra/DrivingRangeApp.java 
+echo "---------Ready to Run Code---------"
+read -p "Enter the desired number of Golfers (don't worry you will be able to change it ;) ):" golfers
+read -p "Enter the desired number of balls/stash size:" stash
+read -p "Enter the desired size of buckets (but it's not fixed of course!):" bucketSize
+echo "---------Computing---------"
+echo "Remember to check out the rules and extra information about the state of the Driving Range on the GUI at the same time as the output of golfers!"
+echo "(the GUI has to be in focus to accept keyboard input)"
+echo "Running the 'EXTRA' Program"
+java golfGameExtra.DrivingRangeApp $golfers $stash $bucketSize
+echo "---------Finished Script---------"
+

@@ -1,53 +1,38 @@
+/* Range in the Driving Range. Role is to store incoming balls.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
+
 package golfGameExtra;
 
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Range {
-	private final int sizeStash;
-	private BlockingQueue<golfBall> stash;
-	private AtomicBoolean bollieCollecting;
 	private AtomicBoolean done;
+	private BlockingQueue<golfBall> stash;
 	
-	Range(int sizeStash, AtomicBoolean bollieCollecting, AtomicBoolean done) {
-		this.sizeStash = sizeStash;
-		this.bollieCollecting = bollieCollecting;
+	Range(AtomicInteger sizeStash, AtomicBoolean done) {
 		this.done = done;
-		stash = new ArrayBlockingQueue<golfBall>(sizeStash);
+		stash = new ArrayBlockingQueue<golfBall>(sizeStash.get());
 	}
 	
-	public synchronized int hitBallOntoField(golfBall golfBall) throws InterruptedException {
-		
-		while(bollieCollecting.equals(true)) {//if there is no cart on the field
-			wait();
-		}
-
+	//add a golf ball to the range's queue
+	public synchronized void hitBallOntoField(golfBall golfBall, int myID) throws InterruptedException {
 		stash.add(golfBall);
-		
-		return golfBall.getID();
-		
+		System.out.println("Golfer #"+ myID + " hit ball #"+ golfBall.getID() +" onto field");
 	}
 
-	public synchronized int collectAllBallsFromField(Queue<golfBall> ballsCollected) throws InterruptedException {
-		int ballsRetrieved = getBallsOnRange();
-		while((done.get() != true) && !stash.isEmpty()){
-			
+	//method for Bollie to collect all balls from the stash
+	public synchronized void collectAllBallsFromField(Queue<golfBall> ballsCollected) throws InterruptedException {
+		//add balls from stash one by one by to Bollies private stash.
+		while((done.get() != true) && !stash.isEmpty()){	
 			golfBall ball = stash.take();
-//			System.out.println("BOLLIE COLLECTING:::This ball has an ID of: " + ball.getID());
-//			System.out.println("Stash now has: " + stash.size() + " with a 'isEmpty' value of " + stash.isEmpty());
-//			System.out.println("Bollie is now carrying: " + ballsCollected.size() + " but should be " + ballsRetrieved);
-			
-			ballsCollected.add(ball);
-			
+			ballsCollected.add(ball);	
 		}
-		
-		return ballsRetrieved;
 	}
-	
-	private synchronized int getBallsOnRange() {
-		return stash.size();
-	}
-
 }

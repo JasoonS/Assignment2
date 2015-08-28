@@ -1,5 +1,10 @@
-package golfGame;
+/* Golf ball unit in the Driving Range.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
 
+package golfGame;
 
 public class golfBall {
 	

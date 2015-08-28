@@ -1,3 +1,8 @@
+/*Golf Ball Stash for the Driving Range.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
 package golfGame;
 
 import java.util.Queue;
@@ -36,42 +41,45 @@ public class BallStash {
 	}
 	
 	//this method safely refills a bucket of balls for the Golfer.
-	public boolean getBucketBalls(Queue<golfBall> golferBucket, int myID) throws InterruptedException {
-		//this object's state is only dependent on the stash variable 
-		//  (the other variables are not related to the object's state and are either shared or constant)
-		synchronized(stash){
+		public boolean getBucketBalls(Queue<golfBall> golferBucket, int myID) throws InterruptedException {
+			//this object's state is only dependent on the stash variable 
+			//  (the other variables are not related to the object's state and are either shared or constant)
+			synchronized(stash){
+				
+				while(getBallsInStash() < getSizeBucket()) {
+					if(done.get()) return false; //ok since done is atomic.
+					//waits if the stash is not large enough to safely full a bucket
+					stash.wait();
+				}
+				
+				//loop through filling bucket to capacity
+				for(int i = 0; i < sizeBucket; i++) {
+					golferBucket.add(stash.take());
+				}
+				
+				//get the size of the stash while still synchronized to the stash
+				int stashSize = stash.size();		
+				
+				//NOTE: I included this in the stash lock so that it prints the remaining number of balls in the correct order.
+				//		if this is not important to you, putting this outside the stash lock is completely safe.
+				//This print needs to be here to prevent interleaving at closing time
+				//  - synchronized on done to prevent interleaving
+				synchronized(done) {
+					if(done.get()) return false;
+					
+					System.out.println("<<< Golfer #"+ myID + " filled bucket with          "+sizeBucket+" balls (remaining stash="+ stashSize +")");
+				}
+			}//See the 'NOTE' above for reason of this closing brackets placement
 			
-			while(getBallsInStash() < getSizeBucket()) {
-				if(done.get()) return false; //ok since done is atomic.
-				//waits if the stash is not large enough to safely full a bucket
-				stash.wait();
-			}
-			
-			//loop through filling bucket to capacity
-			for(int i = 0; i < sizeBucket; i++) {
-				golferBucket.add(stash.take());
-			}
-		}//- release the lock on stash here, before printing or checking done field again.
-			
-		//This print needs to be here to prevent interleaving at closing time
-		//  - synchronized on done to prevent interleaving
-		synchronized(done) {
-			if(done.get()) {
-				System.out.println("<<< Golfer #"+ myID + " filled bucket with          "+sizeBucket+" balls");
-				return false;
-			}
+			//return true as clearly the transaction of balls was successful.
+			return true;
 		}
-		//return true as clearly the transaction of balls was successful.
-		return true;
-
-	}
 	
 	//No protection mechanism as BlockingQueue's are themselves atomic
 	//Returns number of balls in Stash()
 	private int getBallsInStash() {
 		return stash.size();
 	}
-
 	
 	public void addBallsToStash(Queue<golfBall> ballsCollected) throws InterruptedException {
 		synchronized(stash){

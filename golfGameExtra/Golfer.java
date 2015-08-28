@@ -1,21 +1,26 @@
+/* Golfer entity in the Driving Range.
+ * 
+ * CSC2002S - Assignment2
+ * @author	Jason Smythe
+ */
+
 package golfGameExtra;
 
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Golfer extends Thread {
-
-	//Remember to ensure thread safety
 	
-	private AtomicBoolean done;
-	
-	private static int noGolfers; //shared amongst threads
+	private static AtomicInteger noGolfers = new AtomicInteger(0); //shared amongst threads
 	private static int ballsPerBucket; //shared amongst threads
 	
-	private int myID;
+	private boolean leave = false;//this new variable acts as a flag notifying when player should leave the golf range
 	
+	private final int myID; //unique identifier for the object
+	private AtomicBoolean done;
 	private Queue<golfBall> golferBucket;
 	private BallStash sharedStash; //link to shared stash
 	private Range sharedField; //link to shared field
@@ -30,60 +35,74 @@ public class Golfer extends Thread {
 		myID=newGolfID();
 	}
 
+	//Never accessed concurrently
 	private static int newGolfID() { 
-		noGolfers++;
-		return noGolfers;
+		return noGolfers.incrementAndGet();
 	}
 	
+	public static boolean removeGolfer(){
+		if(noGolfers.get() < 1) return false;
+		
+		noGolfers.decrementAndGet();
+		return true;
+	}
+	
+	//helper method for clean code
 	private boolean fullBucket() throws InterruptedException{
 		return sharedStash.getBucketBalls(golferBucket, myID);
 	}
 	
-	public static void setBallsPerBucket (int noBalls) {
-		ballsPerBucket=noBalls;
+	//Only set once, don't need to worry about concurrency.
+	public static void setBallsPerBucket (AtomicInteger sizeBucket) {
+		ballsPerBucket=sizeBucket.get();
 	}
+	
+	//Never modified, no need to synchronize.
 	private static int getBallsPerBucket () {
 		return ballsPerBucket;
 	}
+	
+	
 	public void run() {
 		
 		while (done.get() != true) {
 			
-			 
-			System.out.println(">>> Golfer #"+ myID + " trying to fill bucket with "+getBallsPerBucket()+" balls.");
+			//Need to lock on done to prevent read-act compound action (ie make it impossible to print this like once golf range closes).
+			synchronized(done){
+				if(done.get() || leave) return;
+				
+				System.out.println(">>> Golfer #"+ myID + " trying to fill bucket with "+getBallsPerBucket()+" balls.");
+			}
+			
 			try {
-				//Return if the bucket wasn't filled due to closing time.
-				if(!fullBucket()) return;
+				//Return if the bucket was not filled due to closing time.
+				if(!fullBucket() || leave) return;
+				
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}	
 			
-			for (int b=0;b<ballsPerBucket;b++)
+			while(!golferBucket.isEmpty())
 			{ //for every ball in bucket
-				
 			    try {
 					sleep(swingTime.nextInt(2000));
-					int hittBallId = hittBallOnRange();
-//					System.out.println("Golfer #"+ myID + " hit ball #"+hittBallId+" onto field");	
 					
+					if(leave) return;
+					hittBallOnRange(); //      swing
 					
 				} catch (InterruptedException e) {
 					e.printStackTrace();
-				} //      swing
-			    
-				    
-			    //!!wair for cart if necessary if cart there
+				}
 			}
-			
 		}
-		return;
+		return; //means the done flag has been set to true
 	}
 
-	private synchronized int hittBallOnRange() throws InterruptedException {
-//		System.out.println("Golfer #"+ myID + "Bucket had - " + golferBucket.size() + "balls"); 
-		int num = sharedField.hitBallOntoField(golferBucket.remove());
-//		System.out.println("Golfer #"+ myID + "Now the bucket has - " + golferBucket.size() + "balls");
-//		System.out.println("Golfer #"+ myID + " hit ball #"+num+" onto field");
-		return num;
+	private void hittBallOnRange() throws InterruptedException {
+		sharedField.hitBallOntoField(golferBucket.remove(), myID);
+	}
+
+	public void makeLeave() {
+		leave = true;
 	}	
 }
